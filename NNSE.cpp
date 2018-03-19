@@ -19,7 +19,7 @@ NNSE::Config::Config(const CHECK check){
   const std::string modelName = "NNSE10";
   const std::string testModelName = "2018-01-15-19-46-full.54ITR";
 
-    // path
+  // path
   if(check == GRAD_CHECK){
     this->base = "C:/Users/K_Kinugawa/Desktop/workspace/";
     this->trainDataPath = this->base + "path-list/170721/170721.30000.train.path.org";
@@ -33,7 +33,7 @@ NNSE::Config::Config(const CHECK check){
     this->testDataPath = this->base + "path-list/170721/170721." + std::to_string(dataSize) + ".test.path.org";
   }
 
- // Log path for training
+  // Log path for training
   this->validLogPath = this->base + modelName + "/log/valid-" + this->date + ".csv";
   this->trainLogPath = this->base + modelName + "/log/train-" + this->date + ".csv";
   this->modelSavePath = this->base + modelName + "/model/model-" + this->date + "-full.";
@@ -121,18 +121,18 @@ NNSE::Config::Config(const CHECK check){
   this->nameFreqThreshold = 5;
 
   if(check == OFF){
-  this->threadNum = 10;
-  this->testThreadNum = 2;
-  this->miniBatchSize = 20;
-  this->itrThreshold = (dataSize*0.9/this->miniBatchSize)/3;
-  this->epochThreshold = 20;
+    this->threadNum = 10;
+    this->testThreadNum = 2;
+    this->miniBatchSize = 20;
+    this->itrThreshold = (dataSize*0.9/this->miniBatchSize)/3;
+    this->epochThreshold = 20;
   }
   else{
-  this->threadNum = 1;
-  this->testThreadNum = 1;
-  this->miniBatchSize = 1;
-  this->epochThreshold = 1;
-  this->itrThreshold = dataSize;
+    this->threadNum = 1;
+    this->testThreadNum = 1;
+    this->miniBatchSize = 1;
+    this->epochThreshold = 1;
+    this->itrThreshold = dataSize;
   }
 
   this->seed = (unsigned long)time(NULL);
@@ -145,11 +145,11 @@ NNSE::Config::Config(const CHECK check){
 }
 
 NNSE::NNSE(Vocabulary& v, NNSE::Config& _config, const MODE mode_):
- voc(v), config(_config), mode(mode_),
- zeroSent(VecD::Zero(_config.decSentInputDim)),
- zeroPar(VecD::Zero(_config.decParInputDim)),
- zeroSec(VecD::Zero(_config.decSecInputDim)),
- grad(0)
+  voc(v), config(_config), mode(mode_),
+  zeroSent(VecD::Zero(_config.decSentInputDim)),
+  zeroPar(VecD::Zero(_config.decParInputDim)),
+  zeroSec(VecD::Zero(_config.decSecInputDim)),
+  grad(0)
 {
   // load data
   this->loadData(mode_);
@@ -172,11 +172,11 @@ NNSE::NNSE(Vocabulary& v, NNSE::Config& _config, const MODE mode_):
 
   this->decPar = LSTM(_config.decParInputDim, _config.decParOutputDim, _config.dropoutRateDecParX);
   this->classifierPar = MLP(_config.encParOutputDim, _config.decParOutputDim, _config.classifierHiddenDim,
-    _config.classifierHiddenDim, _config.classifierHiddenDim, _config.dropoutRateMLPPar);
+			    _config.classifierHiddenDim, _config.classifierHiddenDim, _config.dropoutRateMLPPar);
 
   this->decSent = LSTM(_config.decSentInputDim, _config.decSentOutputDim, _config.dropoutRateDecSentX);
   this->classifierSent = MLP(_config.encSentOutputDim, _config.decSentOutputDim, _config.classifierHiddenDim,
-    _config.classifierHiddenDim, _config.classifierHiddenDim, _config.dropoutRateMLPSent);
+			     _config.classifierHiddenDim, _config.classifierHiddenDim, _config.dropoutRateMLPSent);
 
   if(mode_ == TRAIN){
     // if train mode, grad is on. if test mode, grad is off
@@ -459,17 +459,15 @@ void NNSE::decoderSecForwardTrain(NNSE::ThreadArg& arg){
   // std::cout << "DEC : SEC#" << 0 << std::endl;
   this->decoderParForwardTrain(arg.orgSecState[0], arg);// note! train
   for(size_t i = 1, i_end = arg.secSeqEndIndex; i <= i_end; ++i){
-     // note! train
-     if(arg.orgSecState[i-1].sec->label > 0.5){
-       // positive
-       // which one is better for decoder input?
-       // this->decSec.forward(doc.orgSecState[i-1]->decParState.back()->h, doc.decSecState[i-1]->c, doc.decSecState[i-1]->h, doc.decSecState[i]);
-       this->decSec.forward(arg.orgSecState[i-1].encParEndState->h, arg.decSecState[i-1]->c, arg.decSecState[i-1]->h, arg.decSecState[i]);
-     }
-     else{
-       // negative
-       this->decSec.forward(this->zeroSec, arg.decSecState[i-1]->c, arg.decSecState[i-1]->h, arg.decSecState[i]);
-     }
+    // note! train
+    if(arg.orgSecState[i-1].sec->label > 0.5){
+      // positive
+      this->decSec.forward(arg.orgSecState[i-1].encParEndState->h, arg.decSecState[i-1]->c, arg.decSecState[i-1]->h, arg.decSecState[i]);
+    }
+    else{
+      // negative
+      this->decSec.forward(this->zeroSec, arg.decSecState[i-1]->c, arg.decSecState[i-1]->h, arg.decSecState[i]);
+    }
     arg.metrics.loss.coeffRef(2,0) += this->classifierSecForward(i, arg);
     // std::cout << "DEC : SEC#" << i << std::endl;
     this->decoderParForwardTrain(arg.orgSecState[i], arg);
@@ -483,8 +481,6 @@ void NNSE::decoderSecBackward1(ThreadArg& arg, NNSE::Grad& grad){
     // train
     if(arg.orgSecState[i-1].sec->label > 0.5){
       // positive
-      // which one is better for decoder input?
-      // this->decSec.backward1(doc.orgSecState[i-1]->decParState.back()->delh, doc.decSecState[i-1]->delc, doc.decSecState[i-1]->delh, doc.decSecState[i], grad.decSecGrad);
       this->decSec.backward1(arg.orgSecState[i-1].encParEndState->delh, arg.decSecState[i-1]->delc, arg.decSecState[i-1]->delh, arg.decSecState[i], grad.decSecGrad);
     }
     else{
@@ -535,8 +531,6 @@ void NNSE::decoderSecForwardTest(NNSE::ThreadArg& arg){
   this->decoderParForwardTest(arg.orgSecState[0], arg);// note! TEST
   for(size_t i = 1, i_end = arg.secSeqEndIndex; i <= i_end; ++i){
     // note! test
-    // which one is better for decoder input?
-    // this->decSec.forward(doc.orgSecState[i-1]->sec->score*doc.orgSecState[i-1]->decParState.back()->h, doc.decSecState[i-1]->c, doc.decSecState[i-1]->h, doc.decSecState[i]);
     this->decSec.forward(arg.orgSecState[i-1].sec->score*arg.orgSecState[i-1].encParEndState->h, arg.decSecState[i-1]->c, arg.decSecState[i-1]->h, arg.decSecState[i]);
     arg.metrics.loss.coeffRef(2,0) += this->classifierSecForward(i, arg);
     // std::cout << "DEC : SEC#" << i << std::endl;
@@ -572,8 +566,6 @@ void NNSE::decoderParForwardTrain(NNSE::Section& sec, NNSE::ThreadArg& arg){
     // note! train
     if(sec.orgParState[i-1]->par->label > 0.5){
       // positive
-      // which is better for decoder input?
-      // this->decPar.forward(sec.orgParState[i-1]->decSentState.back()->h, sec.decParState[i-1]->c, sec.decParState[i-1]->h, sec.decParState[i]);
       this->decPar.forward(sec.orgParState[i-1]->encSentEndState->h, sec.decParState[i-1]->c, sec.decParState[i-1]->h, sec.decParState[i]);
     }
     else{
@@ -592,8 +584,6 @@ void NNSE::decoderParBackward1(NNSE::Section& sec, NNSE::Grad& grad){
     // note train!
     if(sec.orgParState[i-1]->par->label > 0.5){
       // positive
-      // which is better for decoder input?
-      // this->decPar.backward1(sec.orgParState[i-1]->decSentState.back()->delh, sec.decParState[i-1]->delc, sec.decParState[i-1]->delh, sec.decParState[i], grad.decParGrad);
       this->decPar.backward1(sec.orgParState[i-1]->encSentEndState->delh, sec.decParState[i-1]->delc, sec.decParState[i-1]->delh, sec.decParState[i], grad.decParGrad);
     }
     else{
@@ -660,8 +650,6 @@ void NNSE::decoderParForwardTest(NNSE::Section& sec, NNSE::ThreadArg& arg){
   this->decoderSentForwardTest(*sec.orgParState[0], arg);// note! Test
   for(size_t i = 1, i_end = sec.decParState.size() - 1; i <= i_end; ++i){
     // note! test
-    // which is better for decoder input?
-    // this->decPar.forward(sec.orgParState[i-1]->par->score*sec.orgParState[i-1]->decSentState.back()->h, sec.decParState[i-1]->c, sec.decParState[i-1]->h, sec.decParState[i]);
     this->decPar.forward(sec.orgParState[i-1]->par->score*sec.orgParState[i-1]->encSentEndState->h, sec.decParState[i-1]->c, sec.decParState[i-1]->h, sec.decParState[i]);
     arg.metrics.loss.coeffRef(1,0) += this->classifierParForward(i, sec);
     this->decoderSentForwardTest(*sec.orgParState[i], arg);// note! Test
@@ -937,8 +925,8 @@ void NNSE::trainOpenMP(const unsigned int epoch, const unsigned int epochEnd){
 
   for (auto it = miniBatch.begin(), itEnd = miniBatch.end(); it != itEnd; ++it) {
     std::cout << "\r"
-    << "At Epoch: " << epoch << " -> Progress: " << ++count << "/" << miniBatch.size()
-    << " mini batches" << std::flush;
+	      << "At Epoch: " << epoch << " -> Progress: " << ++count << "/" << miniBatch.size()
+	      << " mini batches" << std::flush;
 
     ++this->miniBatchStepNum;
 
@@ -951,7 +939,7 @@ void NNSE::trainOpenMP(const unsigned int epoch, const unsigned int epochEnd){
     // setMiniBacth
     this->setMiniBatch(it->first, it->second);
 
-    #pragma omp parallel for num_threads(this->config.threadNum) schedule(dynamic) shared(args)
+#pragma omp parallel for num_threads(this->config.threadNum) schedule(dynamic) shared(args)
     //#pragma omp parallel for num_threads(this->threadNum) schedule(dynamic)
     //      for (unsigned int i = it->first; i <= it->second; ++i) {
     for (unsigned int i = 0; i < thisStepSize; ++i) {
@@ -984,12 +972,12 @@ void NNSE::trainOpenMP(const unsigned int epoch, const unsigned int epochEnd){
 
     // SGD & gradinent clipping
     /*
-    Real gradNorm = sqrt(grad.norm())/thisStepSize;
-    Utils::infNan(gradNorm);
-    Real lr = (gradNorm > this->clip ? this->clip*this->lr/gradNorm : this->lr);//clip
-    grad.sgd(*this, lr/thisStepSize);
-    std::cout << " -> Training Loss (per doc) : " << lossMiniBatch << ", gradNorm : " << gradNorm <<
-    ", lr (per doc) : " << lr << std::endl;
+      Real gradNorm = sqrt(grad.norm())/thisStepSize;
+      Utils::infNan(gradNorm);
+      Real lr = (gradNorm > this->clip ? this->clip*this->lr/gradNorm : this->lr);//clip
+      grad.sgd(*this, lr/thisStepSize);
+      std::cout << " -> Training Loss (per doc) : " << lossMiniBatch << ", gradNorm : " << gradNorm <<
+      ", lr (per doc) : " << lr << std::endl;
     */
 
     // l2reg for cnns
@@ -1019,9 +1007,9 @@ void NNSE::trainOpenMP(const unsigned int epoch, const unsigned int epochEnd){
       // update the learning rate
       //sgd
       /*
-      this->lr = lrOrig/(1.0+this->decay*this->itr);// if use adam, this is unnesacrry?
-      std::cout << std::endl;
-      std::cout << "lr = " << this->lr << std::endl;
+	this->lr = lrOrig/(1.0+this->decay*this->itr);// if use adam, this is unnesacrry?
+	std::cout << std::endl;
+	std::cout << "lr = " << this->lr << std::endl;
       */
 
       // save train loss & recall
@@ -1056,7 +1044,7 @@ void NNSE::trainOpenMP(const unsigned int epoch, const unsigned int epochEnd){
         args[id].metrics.setZero();
       }
 
-      #pragma omp parallel for num_threads(this->config.threadNum) schedule(dynamic) shared(args)
+#pragma omp parallel for num_threads(this->config.threadNum) schedule(dynamic) shared(args)
       for (unsigned int i = 0; i < this->validData.size(); ++i) {
         const unsigned int id = omp_get_thread_num();
         args[id].init(this->validData[i]);
@@ -1195,21 +1183,21 @@ void NNSE::test(const CHECK check){
 
   // test log items
   fout
-  << "FILE_NAME"     << "\t"
-  << "SENTENCE_NUM"  << "\t" << "PARAGRAPH_NUM"                   << "\t" << "SECTION_NUM" << "\t"
-  << "ROUGE_1_R"     << "\t" << "ROUGE_1_P"                       << "\t" << "ROUGE_1_F" << "\t"
-  << "ROUGE_2_R"     << "\t" << "ROUGE_2_P"                       << "\t" << "ROUGE_2_F" << "\t"
-  << "ROUGE_L_R"     << "\t" << "ROUGE_L_P"                       << "\t" << "ROUGE_L_F" << "\t"
-  << "CORRECT_NUM" << "\t" << "POS_SEC_POS_PAR_NUM" << "\t" << "POS_SEC_NEGA_PAR_NUM" << "\t" << "NEGA_SEC_NEGA_PAR_NUM" << "\t"
-  << "CORRECT_RATE" << "\t" << "POS_SEC_POS_PAR_RATE" << "\t" << "POS_SEC_NEGA_PAR_RATE" << "\t" << "NEGA_SEC_NEGA_PAR_RATE" << "\t"
-  << "REG_POS_SEC_POS_PAR_RATE" << "\t" << "REG_POS_SEC_NEGA_PAR_RATE" << "\t" << "REG_NEGA_SEC_NEGA_PAR_RATE" << "\t"
-  << "SENT_GOLD_IDS" << "\t" << "SENT_SYSTEM_IDS" << "\t" << "SENT_RECALL" << "\t"
-  << "SENT_IDS/SCORE/REG_SCORE" << "\t"
-  << "PAR_GOLD_IDS"  << "\t" << "PAR_SYSTEM_IDS"  << "\t" << "PAR_RECALL" << "\t"
-  << "PAR_IDS/SCORE/REG_SCORE" << "\t"
-  << "SEC_GOLD_IDS"  << "\t" << "SEC_SYSTEM_IDS"  << "\t" << "SEC_RECALL" << "\t"
-  << "SEC_IDS/SCORE/REG_SCORE" << "\t"
-  << std::endl;
+    << "FILE_NAME"     << "\t"
+    << "SENTENCE_NUM"  << "\t" << "PARAGRAPH_NUM"                   << "\t" << "SECTION_NUM" << "\t"
+    << "ROUGE_1_R"     << "\t" << "ROUGE_1_P"                       << "\t" << "ROUGE_1_F" << "\t"
+    << "ROUGE_2_R"     << "\t" << "ROUGE_2_P"                       << "\t" << "ROUGE_2_F" << "\t"
+    << "ROUGE_L_R"     << "\t" << "ROUGE_L_P"                       << "\t" << "ROUGE_L_F" << "\t"
+    << "CORRECT_NUM" << "\t" << "POS_SEC_POS_PAR_NUM" << "\t" << "POS_SEC_NEGA_PAR_NUM" << "\t" << "NEGA_SEC_NEGA_PAR_NUM" << "\t"
+    << "CORRECT_RATE" << "\t" << "POS_SEC_POS_PAR_RATE" << "\t" << "POS_SEC_NEGA_PAR_RATE" << "\t" << "NEGA_SEC_NEGA_PAR_RATE" << "\t"
+    << "REG_POS_SEC_POS_PAR_RATE" << "\t" << "REG_POS_SEC_NEGA_PAR_RATE" << "\t" << "REG_NEGA_SEC_NEGA_PAR_RATE" << "\t"
+    << "SENT_GOLD_IDS" << "\t" << "SENT_SYSTEM_IDS" << "\t" << "SENT_RECALL" << "\t"
+    << "SENT_IDS/SCORE/REG_SCORE" << "\t"
+    << "PAR_GOLD_IDS"  << "\t" << "PAR_SYSTEM_IDS"  << "\t" << "PAR_RECALL" << "\t"
+    << "PAR_IDS/SCORE/REG_SCORE" << "\t"
+    << "SEC_GOLD_IDS"  << "\t" << "SEC_SYSTEM_IDS"  << "\t" << "SEC_RECALL" << "\t"
+    << "SEC_IDS/SCORE/REG_SCORE" << "\t"
+    << std::endl;
 
   for(size_t i = 0, i_end = nnse.testData.size(); i < i_end; ++i){
     Article* doc = nnse.testData[i];
@@ -1310,15 +1298,15 @@ void NNSE::test(const CHECK check){
 }
 
 void NNSE::dropout(const MODE mode){
-    this->encSent.dropout(mode);
-    this->encPar.dropout(mode);
-    this->encSec.dropout(mode);
-    this->decSent.dropout(mode);
-    this->decPar.dropout(mode);
-    this->decSec.dropout(mode);
-    this->classifierSent.dropout(mode);
-    this->classifierPar.dropout(mode);
-    this->classifierSec.dropout(mode);
+  this->encSent.dropout(mode);
+  this->encPar.dropout(mode);
+  this->encSec.dropout(mode);
+  this->decSent.dropout(mode);
+  this->decPar.dropout(mode);
+  this->decSec.dropout(mode);
+  this->classifierSent.dropout(mode);
+  this->classifierPar.dropout(mode);
+  this->classifierSec.dropout(mode);
 }
 
 void NNSE::save(const std::string& file){
@@ -1390,7 +1378,7 @@ void NNSE::loadData(const MODE mode){
     Article::repUnkToken(this->validData);
   }
   else if(mode == TEST){
-        // testing data
+    // testing data
     Article::set(this->config.testDataPath, this->testData, this->voc);
     Article::repUnkToken(this->testData);
   }
@@ -1416,7 +1404,7 @@ void NNSE::clear(){
 }
 
 NNSE::Grad::Grad(NNSE& nnse):
-adamGradHist(0)
+  adamGradHist(0)
 {
   this->embedGrad = Embed::Grad(nnse.embed);
   this->cnnsGrad = CNNS<CNNS_KERNEL_NUM>::Grad(nnse.cnns);
@@ -1538,7 +1526,7 @@ void NNSE::Grad::clear(){
 
 NNSE::ThreadArg::ThreadArg(NNSE& nnse){
   //this->rnd = Rand(nnse.rnd.next());// for dropout
-  this->rnd.init(nnse.rnd.next());//新しいRand使うならコッチでいいか
+  this->rnd.init(nnse.rnd.next());
   // metrics
   this->metrics.setZero();
 
@@ -1567,7 +1555,6 @@ NNSE::ThreadArg::ThreadArg(NNSE& nnse){
   }
 }
 void NNSE::ThreadArg::init(Article* doc_){
-  // Modelに流す前にこいつを実行する必要がある
   //  std::cout << "INSIDE ARG INIT" << std::endl;
   this->doc = doc_;
   this->sentSeqEndIndex = doc_->bodySentNum - 1;
@@ -1802,169 +1789,169 @@ void NNSEGradChecker::test(){
 
   gc.flag = MaxPooling::CALC_GRAD;
 
-    gc.calcGrad();
-    std::cout << "calcGrad o.k." << std::endl;
+  gc.calcGrad();
+  std::cout << "calcGrad o.k." << std::endl;
 
-    gc.flag = MaxPooling::CALC_LOSS;
+  gc.flag = MaxPooling::CALC_LOSS;
 
-    std::cout << "classifierSent" << std::endl;
-    std::cout << "W0" << std::endl;
-    gc.gradCheck(arg.grad.classifierSentGrad.W0, nnse.classifierSent.W0);
-    std::cout << "W1" << std::endl;
-    gc.gradCheck(arg.grad.classifierSentGrad.W1, nnse.classifierSent.W1);
-    std::cout << "W2" << std::endl;
-    gc.gradCheck(arg.grad.classifierSentGrad.W2, nnse.classifierSent.W2);
-    std::cout << "b0" << std::endl;
-    gc.gradCheck(arg.grad.classifierSentGrad.b0, nnse.classifierSent.b0);
-    std::cout << "b1" << std::endl;
-    gc.gradCheck(arg.grad.classifierSentGrad.b1, nnse.classifierSent.b1);
-    std::cout << "b2" << std::endl;
-    gc.gradCheck(arg.grad.classifierSentGrad.b2, nnse.classifierSent.b2);
+  std::cout << "classifierSent" << std::endl;
+  std::cout << "W0" << std::endl;
+  gc.gradCheck(arg.grad.classifierSentGrad.W0, nnse.classifierSent.W0);
+  std::cout << "W1" << std::endl;
+  gc.gradCheck(arg.grad.classifierSentGrad.W1, nnse.classifierSent.W1);
+  std::cout << "W2" << std::endl;
+  gc.gradCheck(arg.grad.classifierSentGrad.W2, nnse.classifierSent.W2);
+  std::cout << "b0" << std::endl;
+  gc.gradCheck(arg.grad.classifierSentGrad.b0, nnse.classifierSent.b0);
+  std::cout << "b1" << std::endl;
+  gc.gradCheck(arg.grad.classifierSentGrad.b1, nnse.classifierSent.b1);
+  std::cout << "b2" << std::endl;
+  gc.gradCheck(arg.grad.classifierSentGrad.b2, nnse.classifierSent.b2);
 
-    std::cout << "classifierPar" << std::endl;
-    std::cout << "W0" << std::endl;
-    gc.gradCheck(arg.grad.classifierParGrad.W0, nnse.classifierPar.W0);
-    std::cout << "W1" << std::endl;
-    gc.gradCheck(arg.grad.classifierParGrad.W1, nnse.classifierPar.W1);
-    std::cout << "W2" << std::endl;
-    gc.gradCheck(arg.grad.classifierParGrad.W2, nnse.classifierPar.W2);
-    std::cout << "b0" << std::endl;
-    gc.gradCheck(arg.grad.classifierParGrad.b0, nnse.classifierPar.b0);
-    std::cout << "b1" << std::endl;
-    gc.gradCheck(arg.grad.classifierParGrad.b1, nnse.classifierPar.b1);
-    std::cout << "b2" << std::endl;
-    gc.gradCheck(arg.grad.classifierParGrad.b2, nnse.classifierPar.b2);
+  std::cout << "classifierPar" << std::endl;
+  std::cout << "W0" << std::endl;
+  gc.gradCheck(arg.grad.classifierParGrad.W0, nnse.classifierPar.W0);
+  std::cout << "W1" << std::endl;
+  gc.gradCheck(arg.grad.classifierParGrad.W1, nnse.classifierPar.W1);
+  std::cout << "W2" << std::endl;
+  gc.gradCheck(arg.grad.classifierParGrad.W2, nnse.classifierPar.W2);
+  std::cout << "b0" << std::endl;
+  gc.gradCheck(arg.grad.classifierParGrad.b0, nnse.classifierPar.b0);
+  std::cout << "b1" << std::endl;
+  gc.gradCheck(arg.grad.classifierParGrad.b1, nnse.classifierPar.b1);
+  std::cout << "b2" << std::endl;
+  gc.gradCheck(arg.grad.classifierParGrad.b2, nnse.classifierPar.b2);
 
-    std::cout << "classifierSec" << std::endl;
-    std::cout << "W1" << std::endl;
-    gc.gradCheck(arg.grad.classifierSecGrad.W1, nnse.classifierSec.W1);
-    std::cout << "W2" << std::endl;
-    gc.gradCheck(arg.grad.classifierSecGrad.W2, nnse.classifierSec.W2);
-    std::cout << "b1" << std::endl;
-    gc.gradCheck(arg.grad.classifierSecGrad.b1, nnse.classifierSec.b1);
-    std::cout << "b2" << std::endl;
-    gc.gradCheck(arg.grad.classifierSecGrad.b2, nnse.classifierSec.b2);
+  std::cout << "classifierSec" << std::endl;
+  std::cout << "W1" << std::endl;
+  gc.gradCheck(arg.grad.classifierSecGrad.W1, nnse.classifierSec.W1);
+  std::cout << "W2" << std::endl;
+  gc.gradCheck(arg.grad.classifierSecGrad.W2, nnse.classifierSec.W2);
+  std::cout << "b1" << std::endl;
+  gc.gradCheck(arg.grad.classifierSecGrad.b1, nnse.classifierSec.b1);
+  std::cout << "b2" << std::endl;
+  gc.gradCheck(arg.grad.classifierSecGrad.b2, nnse.classifierSec.b2);
 
-    std::cout << "decSec" << std::endl;
-    std::cout << "Wh" << std::endl;
-    gc.gradCheck(arg.grad.decSecGrad.Whi, nnse.decSec.Whi);
-    gc.gradCheck(arg.grad.decSecGrad.Whf, nnse.decSec.Whf);
-    gc.gradCheck(arg.grad.decSecGrad.Who, nnse.decSec.Who);
-    gc.gradCheck(arg.grad.decSecGrad.Whu, nnse.decSec.Whu);
-    std::cout << "Wx" << std::endl;
-    gc.gradCheck(arg.grad.decSecGrad.Wxi, nnse.decSec.Wxi);
-    gc.gradCheck(arg.grad.decSecGrad.Wxf, nnse.decSec.Wxf);
-    gc.gradCheck(arg.grad.decSecGrad.Wxo, nnse.decSec.Wxo);
-    gc.gradCheck(arg.grad.decSecGrad.Wxu, nnse.decSec.Wxu);
-    std::cout << "b" << std::endl;
-    gc.gradCheck(arg.grad.decSecGrad.bi, nnse.decSec.bi);
-    gc.gradCheck(arg.grad.decSecGrad.bf, nnse.decSec.bf);
-    gc.gradCheck(arg.grad.decSecGrad.bo, nnse.decSec.bo);
-    gc.gradCheck(arg.grad.decSecGrad.bu, nnse.decSec.bu);
+  std::cout << "decSec" << std::endl;
+  std::cout << "Wh" << std::endl;
+  gc.gradCheck(arg.grad.decSecGrad.Whi, nnse.decSec.Whi);
+  gc.gradCheck(arg.grad.decSecGrad.Whf, nnse.decSec.Whf);
+  gc.gradCheck(arg.grad.decSecGrad.Who, nnse.decSec.Who);
+  gc.gradCheck(arg.grad.decSecGrad.Whu, nnse.decSec.Whu);
+  std::cout << "Wx" << std::endl;
+  gc.gradCheck(arg.grad.decSecGrad.Wxi, nnse.decSec.Wxi);
+  gc.gradCheck(arg.grad.decSecGrad.Wxf, nnse.decSec.Wxf);
+  gc.gradCheck(arg.grad.decSecGrad.Wxo, nnse.decSec.Wxo);
+  gc.gradCheck(arg.grad.decSecGrad.Wxu, nnse.decSec.Wxu);
+  std::cout << "b" << std::endl;
+  gc.gradCheck(arg.grad.decSecGrad.bi, nnse.decSec.bi);
+  gc.gradCheck(arg.grad.decSecGrad.bf, nnse.decSec.bf);
+  gc.gradCheck(arg.grad.decSecGrad.bo, nnse.decSec.bo);
+  gc.gradCheck(arg.grad.decSecGrad.bu, nnse.decSec.bu);
 
-    std::cout << "decPar" << std::endl;
-    std::cout << "Wh" << std::endl;
-    gc.gradCheck(arg.grad.decParGrad.Whi, nnse.decPar.Whi);
-    gc.gradCheck(arg.grad.decParGrad.Whf, nnse.decPar.Whf);
-    gc.gradCheck(arg.grad.decParGrad.Who, nnse.decPar.Who);
-    gc.gradCheck(arg.grad.decParGrad.Whu, nnse.decPar.Whu);
-    std::cout << "Wx" << std::endl;
-    gc.gradCheck(arg.grad.decParGrad.Wxi, nnse.decPar.Wxi);
-    gc.gradCheck(arg.grad.decParGrad.Wxf, nnse.decPar.Wxf);
-    gc.gradCheck(arg.grad.decParGrad.Wxo, nnse.decPar.Wxo);
-    gc.gradCheck(arg.grad.decParGrad.Wxu, nnse.decPar.Wxu);
-    std::cout << "b" << std::endl;
-    gc.gradCheck(arg.grad.decParGrad.bi, nnse.decPar.bi);
-    gc.gradCheck(arg.grad.decParGrad.bf, nnse.decPar.bf);
-    gc.gradCheck(arg.grad.decParGrad.bo, nnse.decPar.bo);
-    gc.gradCheck(arg.grad.decParGrad.bu, nnse.decPar.bu);
+  std::cout << "decPar" << std::endl;
+  std::cout << "Wh" << std::endl;
+  gc.gradCheck(arg.grad.decParGrad.Whi, nnse.decPar.Whi);
+  gc.gradCheck(arg.grad.decParGrad.Whf, nnse.decPar.Whf);
+  gc.gradCheck(arg.grad.decParGrad.Who, nnse.decPar.Who);
+  gc.gradCheck(arg.grad.decParGrad.Whu, nnse.decPar.Whu);
+  std::cout << "Wx" << std::endl;
+  gc.gradCheck(arg.grad.decParGrad.Wxi, nnse.decPar.Wxi);
+  gc.gradCheck(arg.grad.decParGrad.Wxf, nnse.decPar.Wxf);
+  gc.gradCheck(arg.grad.decParGrad.Wxo, nnse.decPar.Wxo);
+  gc.gradCheck(arg.grad.decParGrad.Wxu, nnse.decPar.Wxu);
+  std::cout << "b" << std::endl;
+  gc.gradCheck(arg.grad.decParGrad.bi, nnse.decPar.bi);
+  gc.gradCheck(arg.grad.decParGrad.bf, nnse.decPar.bf);
+  gc.gradCheck(arg.grad.decParGrad.bo, nnse.decPar.bo);
+  gc.gradCheck(arg.grad.decParGrad.bu, nnse.decPar.bu);
 
-    std::cout << "decSent" << std::endl;
-    std::cout << "Wh" << std::endl;
-    gc.gradCheck(arg.grad.decSentGrad.Whi, nnse.decSent.Whi);
-    gc.gradCheck(arg.grad.decSentGrad.Whf, nnse.decSent.Whf);
-    gc.gradCheck(arg.grad.decSentGrad.Who, nnse.decSent.Who);
-    gc.gradCheck(arg.grad.decSentGrad.Whu, nnse.decSent.Whu);
-    std::cout << "Wx" << std::endl;
-    gc.gradCheck(arg.grad.decSentGrad.Wxi, nnse.decSent.Wxi);
-    gc.gradCheck(arg.grad.decSentGrad.Wxf, nnse.decSent.Wxf);
-    gc.gradCheck(arg.grad.decSentGrad.Wxo, nnse.decSent.Wxo);
-    gc.gradCheck(arg.grad.decSentGrad.Wxu, nnse.decSent.Wxu);
-    std::cout << "b" << std::endl;
-    gc.gradCheck(arg.grad.decSentGrad.bi, nnse.decSent.bi);
-    gc.gradCheck(arg.grad.decSentGrad.bf, nnse.decSent.bf);
-    gc.gradCheck(arg.grad.decSentGrad.bo, nnse.decSent.bo);
-    gc.gradCheck(arg.grad.decSentGrad.bu, nnse.decSent.bu);
+  std::cout << "decSent" << std::endl;
+  std::cout << "Wh" << std::endl;
+  gc.gradCheck(arg.grad.decSentGrad.Whi, nnse.decSent.Whi);
+  gc.gradCheck(arg.grad.decSentGrad.Whf, nnse.decSent.Whf);
+  gc.gradCheck(arg.grad.decSentGrad.Who, nnse.decSent.Who);
+  gc.gradCheck(arg.grad.decSentGrad.Whu, nnse.decSent.Whu);
+  std::cout << "Wx" << std::endl;
+  gc.gradCheck(arg.grad.decSentGrad.Wxi, nnse.decSent.Wxi);
+  gc.gradCheck(arg.grad.decSentGrad.Wxf, nnse.decSent.Wxf);
+  gc.gradCheck(arg.grad.decSentGrad.Wxo, nnse.decSent.Wxo);
+  gc.gradCheck(arg.grad.decSentGrad.Wxu, nnse.decSent.Wxu);
+  std::cout << "b" << std::endl;
+  gc.gradCheck(arg.grad.decSentGrad.bi, nnse.decSent.bi);
+  gc.gradCheck(arg.grad.decSentGrad.bf, nnse.decSent.bf);
+  gc.gradCheck(arg.grad.decSentGrad.bo, nnse.decSent.bo);
+  gc.gradCheck(arg.grad.decSentGrad.bu, nnse.decSent.bu);
 
-    std::cout << "EOD" << std::endl;
-    gc.gradCheck(arg.grad.EODGrad, nnse.EOD);
+  std::cout << "EOD" << std::endl;
+  gc.gradCheck(arg.grad.EODGrad, nnse.EOD);
 
-    std::cout << "encSec" << std::endl;
-    std::cout << "Wh" << std::endl;
-    gc.gradCheck(arg.grad.encSecGrad.Whi, nnse.encSec.Whi);
-    gc.gradCheck(arg.grad.encSecGrad.Whf, nnse.encSec.Whf);
-    gc.gradCheck(arg.grad.encSecGrad.Who, nnse.encSec.Who);
-    gc.gradCheck(arg.grad.encSecGrad.Whu, nnse.encSec.Whu);
-    std::cout << "Wx" << std::endl;
-    gc.gradCheck(arg.grad.encSecGrad.Wxi, nnse.encSec.Wxi);
-    gc.gradCheck(arg.grad.encSecGrad.Wxf, nnse.encSec.Wxf);
-    gc.gradCheck(arg.grad.encSecGrad.Wxo, nnse.encSec.Wxo);
-    gc.gradCheck(arg.grad.encSecGrad.Wxu, nnse.encSec.Wxu);
-    std::cout << "b" << std::endl;
-    gc.gradCheck(arg.grad.encSecGrad.bi, nnse.encSec.bi);
-    gc.gradCheck(arg.grad.encSecGrad.bf, nnse.encSec.bf);
-    gc.gradCheck(arg.grad.encSecGrad.bo, nnse.encSec.bo);
-    gc.gradCheck(arg.grad.encSecGrad.bu, nnse.encSec.bu);
+  std::cout << "encSec" << std::endl;
+  std::cout << "Wh" << std::endl;
+  gc.gradCheck(arg.grad.encSecGrad.Whi, nnse.encSec.Whi);
+  gc.gradCheck(arg.grad.encSecGrad.Whf, nnse.encSec.Whf);
+  gc.gradCheck(arg.grad.encSecGrad.Who, nnse.encSec.Who);
+  gc.gradCheck(arg.grad.encSecGrad.Whu, nnse.encSec.Whu);
+  std::cout << "Wx" << std::endl;
+  gc.gradCheck(arg.grad.encSecGrad.Wxi, nnse.encSec.Wxi);
+  gc.gradCheck(arg.grad.encSecGrad.Wxf, nnse.encSec.Wxf);
+  gc.gradCheck(arg.grad.encSecGrad.Wxo, nnse.encSec.Wxo);
+  gc.gradCheck(arg.grad.encSecGrad.Wxu, nnse.encSec.Wxu);
+  std::cout << "b" << std::endl;
+  gc.gradCheck(arg.grad.encSecGrad.bi, nnse.encSec.bi);
+  gc.gradCheck(arg.grad.encSecGrad.bf, nnse.encSec.bf);
+  gc.gradCheck(arg.grad.encSecGrad.bo, nnse.encSec.bo);
+  gc.gradCheck(arg.grad.encSecGrad.bu, nnse.encSec.bu);
 
-    std::cout << "encPar" << std::endl;
-    std::cout << "Wh" << std::endl;
-    gc.gradCheck(arg.grad.encParGrad.Whi, nnse.encPar.Whi);
-    gc.gradCheck(arg.grad.encParGrad.Whf, nnse.encPar.Whf);
-    gc.gradCheck(arg.grad.encParGrad.Who, nnse.encPar.Who);
-    gc.gradCheck(arg.grad.encParGrad.Whu, nnse.encPar.Whu);
-    std::cout << "Wx" << std::endl;
-    gc.gradCheck(arg.grad.encParGrad.Wxi, nnse.encPar.Wxi);
-    gc.gradCheck(arg.grad.encParGrad.Wxf, nnse.encPar.Wxf);
-    gc.gradCheck(arg.grad.encParGrad.Wxo, nnse.encPar.Wxo);
-    gc.gradCheck(arg.grad.encParGrad.Wxu, nnse.encPar.Wxu);
-    std::cout << "b" << std::endl;
-    gc.gradCheck(arg.grad.encParGrad.bi, nnse.encPar.bi);
-    gc.gradCheck(arg.grad.encParGrad.bf, nnse.encPar.bf);
-    gc.gradCheck(arg.grad.encParGrad.bo, nnse.encPar.bo);
-    gc.gradCheck(arg.grad.encParGrad.bu, nnse.encPar.bu);
+  std::cout << "encPar" << std::endl;
+  std::cout << "Wh" << std::endl;
+  gc.gradCheck(arg.grad.encParGrad.Whi, nnse.encPar.Whi);
+  gc.gradCheck(arg.grad.encParGrad.Whf, nnse.encPar.Whf);
+  gc.gradCheck(arg.grad.encParGrad.Who, nnse.encPar.Who);
+  gc.gradCheck(arg.grad.encParGrad.Whu, nnse.encPar.Whu);
+  std::cout << "Wx" << std::endl;
+  gc.gradCheck(arg.grad.encParGrad.Wxi, nnse.encPar.Wxi);
+  gc.gradCheck(arg.grad.encParGrad.Wxf, nnse.encPar.Wxf);
+  gc.gradCheck(arg.grad.encParGrad.Wxo, nnse.encPar.Wxo);
+  gc.gradCheck(arg.grad.encParGrad.Wxu, nnse.encPar.Wxu);
+  std::cout << "b" << std::endl;
+  gc.gradCheck(arg.grad.encParGrad.bi, nnse.encPar.bi);
+  gc.gradCheck(arg.grad.encParGrad.bf, nnse.encPar.bf);
+  gc.gradCheck(arg.grad.encParGrad.bo, nnse.encPar.bo);
+  gc.gradCheck(arg.grad.encParGrad.bu, nnse.encPar.bu);
 
-    std::cout << "encSent" << std::endl;
-    std::cout << "Wh" << std::endl;
-    gc.gradCheck(arg.grad.encSentGrad.Whi, nnse.encSent.Whi);
-    gc.gradCheck(arg.grad.encSentGrad.Whf, nnse.encSent.Whf);
-    gc.gradCheck(arg.grad.encSentGrad.Who, nnse.encSent.Who);
-    gc.gradCheck(arg.grad.encSentGrad.Whu, nnse.encSent.Whu);
-    std::cout << "Wx" << std::endl;
-    gc.gradCheck(arg.grad.encSentGrad.Wxi, nnse.encSent.Wxi);
-    gc.gradCheck(arg.grad.encSentGrad.Wxf, nnse.encSent.Wxf);
-    gc.gradCheck(arg.grad.encSentGrad.Wxo, nnse.encSent.Wxo);
-    gc.gradCheck(arg.grad.encSentGrad.Wxu, nnse.encSent.Wxu);
-    std::cout << "b" << std::endl;
-    gc.gradCheck(arg.grad.encSentGrad.bi, nnse.encSent.bi);
-    gc.gradCheck(arg.grad.encSentGrad.bf, nnse.encSent.bf);
-    gc.gradCheck(arg.grad.encSentGrad.bo, nnse.encSent.bo);
-    gc.gradCheck(arg.grad.encSentGrad.bu, nnse.encSent.bu);
+  std::cout << "encSent" << std::endl;
+  std::cout << "Wh" << std::endl;
+  gc.gradCheck(arg.grad.encSentGrad.Whi, nnse.encSent.Whi);
+  gc.gradCheck(arg.grad.encSentGrad.Whf, nnse.encSent.Whf);
+  gc.gradCheck(arg.grad.encSentGrad.Who, nnse.encSent.Who);
+  gc.gradCheck(arg.grad.encSentGrad.Whu, nnse.encSent.Whu);
+  std::cout << "Wx" << std::endl;
+  gc.gradCheck(arg.grad.encSentGrad.Wxi, nnse.encSent.Wxi);
+  gc.gradCheck(arg.grad.encSentGrad.Wxf, nnse.encSent.Wxf);
+  gc.gradCheck(arg.grad.encSentGrad.Wxo, nnse.encSent.Wxo);
+  gc.gradCheck(arg.grad.encSentGrad.Wxu, nnse.encSent.Wxu);
+  std::cout << "b" << std::endl;
+  gc.gradCheck(arg.grad.encSentGrad.bi, nnse.encSent.bi);
+  gc.gradCheck(arg.grad.encSentGrad.bf, nnse.encSent.bf);
+  gc.gradCheck(arg.grad.encSentGrad.bo, nnse.encSent.bo);
+  gc.gradCheck(arg.grad.encSentGrad.bu, nnse.encSent.bu);
 
-    std::cout << "cnns" << std::endl;
-    for(int i = 0, i_end = CNNS_KERNEL_NUM; i < i_end; ++i){
-      std::cout << "i -> " << i << std::endl;
-      gc.gradCheck(arg.grad.cnnsGrad.cnn[i].conv.W, nnse.cnns.cnn[i].conv.W);
-      gc.gradCheck(arg.grad.cnnsGrad.cnn[i].conv.b, nnse.cnns.cnn[i].conv.b);
-    }
+  std::cout << "cnns" << std::endl;
+  for(int i = 0, i_end = CNNS_KERNEL_NUM; i < i_end; ++i){
+    std::cout << "i -> " << i << std::endl;
+    gc.gradCheck(arg.grad.cnnsGrad.cnn[i].conv.W, nnse.cnns.cnn[i].conv.W);
+    gc.gradCheck(arg.grad.cnnsGrad.cnn[i].conv.b, nnse.cnns.cnn[i].conv.b);
+  }
 
-    gc.flag = MaxPooling::CALC_GRAD;
+  gc.flag = MaxPooling::CALC_GRAD;
 
-    std::cout << "save-load check" << std::endl;
-    std::cout << "before saving&loading, loss = " << gc.calcLoss() << std::endl;
+  std::cout << "save-load check" << std::endl;
+  std::cout << "before saving&loading, loss = " << gc.calcLoss() << std::endl;
 
-    const std::string path = "./tmp.bin";
-    nnse.save(path);
-    nnse.load(path);
+  const std::string path = "./tmp.bin";
+  nnse.save(path);
+  nnse.load(path);
 
-    std::cout << "after saving&loading , loss = " << gc.calcLoss() << std::endl;
+  std::cout << "after saving&loading , loss = " << gc.calcLoss() << std::endl;
 }
